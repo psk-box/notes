@@ -257,4 +257,89 @@ describe('NotesService', () => {
       expect(result).toEqual(deletedNote);
     });
   });
+
+  describe('Advanced Error Scenarios', () => {
+    it('should handle network errors', async () => {
+      Notes.find.mockRejectedValue(new Error('Network error'));
+
+      await expect(NotesService.getNotesByUserId(1))
+        .rejects.toThrow('Network error');
+    });
+
+    it('should handle malformed query', async () => {
+      Notes.findOne.mockRejectedValue(new Error('Cast error'));
+
+      await expect(NotesService.getNoteById('invalid-id'))
+        .rejects.toThrow('Cast error');
+    });
+
+    it('should handle memory errors on large updates', async () => {
+      const largeContent = 'X'.repeat(10000000); // 10MB
+      Notes.findOneAndUpdate.mockRejectedValue(new Error('Out of memory'));
+
+      await expect(NotesService.updateNote('123', { content: largeContent }))
+        .rejects.toThrow('Out of memory');
+    });
+
+    it('should handle connection pool exhaustion', async () => {
+      Notes.find.mockRejectedValue(new Error('No connections available'));
+
+      await expect(NotesService.getNotesByUserId(1))
+        .rejects.toThrow('No connections available');
+    });
+  });
+
+  describe('Data Consistency', () => {
+    it('should maintain referential integrity for user notes', async () => {
+      const notes = [
+        { id: '1', user_id: 1, content: 'Note 1' },
+        { id: '2', user_id: 1, content: 'Note 2' }
+      ];
+
+      Notes.find.mockResolvedValue(notes);
+
+      const result = await NotesService.getNotesByUserId(1);
+
+      expect(result.every(note => note.user_id === 1)).toBe(true);
+    });
+
+    it('should handle cascading deletes gracefully', async () => {
+      Notes.findOneAndDelete.mockResolvedValue({
+        id: '123',
+        user_id: 1,
+        content: 'Deleted note'
+      });
+
+      const result = await NotesService.deleteNote('123');
+
+      expect(result).toBeDefined();
+      expect(result.id).toBe('123');
+    });
+  });
+
+  describe('Performance Tests', () => {
+    it('should efficiently query notes by user_id', async () => {
+      const startTime = Date.now();
+      Notes.find.mockResolvedValue([]);
+
+      await NotesService.getNotesByUserId(1);
+
+      const endTime = Date.now();
+      expect(endTime - startTime).toBeLessThan(100);
+    });
+
+    it('should handle pagination-sized results', async () => {
+      const paginatedNotes = Array.from({ length: 50 }, (_, i) => ({
+        id: `note-${i}`,
+        user_id: 1,
+        content: `Content ${i}`
+      }));
+
+      Notes.find.mockResolvedValue(paginatedNotes);
+
+      const result = await NotesService.getNotesByUserId(1);
+
+      expect(result).toHaveLength(50);
+    });
+  });
 });

@@ -240,4 +240,69 @@ describe('UserService', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('Advanced Error Scenarios', () => {
+    it('should handle database timeout', async () => {
+      User.find.mockRejectedValue(new Error('ETIMEDOUT'));
+
+      await expect(UserService.getUsers()).rejects.toThrow('ETIMEDOUT');
+    });
+
+    it('should handle connection refused error', async () => {
+      User.findOne.mockRejectedValue(new Error('ECONNREFUSED'));
+
+      await expect(UserService.getUserById(1)).rejects.toThrow('ECONNREFUSED');
+    });
+
+    it('should handle duplicate key error', async () => {
+      const duplicateError = new Error('E11000 duplicate key error');
+      duplicateError.code = 11000;
+      User.findOneAndUpdate.mockRejectedValue(duplicateError);
+
+      await expect(UserService.updateUser(1, { email: 'test@example.com' }))
+        .rejects.toThrow('E11000 duplicate key error');
+    });
+
+    it('should handle validation error', async () => {
+      const validationError = new Error('Validation failed');
+      validationError.name = 'ValidationError';
+      User.findOneAndUpdate.mockRejectedValue(validationError);
+
+      await expect(UserService.updateUser(1, { age: -1 }))
+        .rejects.toThrow('Validation failed');
+    });
+  });
+
+  describe('Performance Tests', () => {
+    it('should handle queries with empty filters', async () => {
+      User.find.mockResolvedValue([]);
+
+      const result = await UserService.getUsers();
+
+      expect(User.find).toHaveBeenCalledWith({});
+      expect(result).toEqual([]);
+    });
+
+    it('should handle concurrent read operations', async () => {
+      const mockUser = { user_id: 1, user_name: 'Test' };
+      User.findOne.mockResolvedValue(mockUser);
+
+      const promises = Array(100).fill(null).map(() => 
+        UserService.getUserById(1)
+      );
+
+      const results = await Promise.all(promises);
+
+      expect(results.every(r => r.user_id === 1)).toBe(true);
+    });
+
+    it('should handle null return efficiently', async () => {
+      User.findOne.mockResolvedValue(null);
+
+      const result = await UserService.getUserById(999999);
+
+      expect(result).toBeNull();
+      expect(User.findOne).toHaveBeenCalledTimes(1);
+    });
+  });
 });

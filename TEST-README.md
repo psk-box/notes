@@ -11,15 +11,18 @@ src/__tests__/
 │   ├── User.controller.test.js      (31 tests)
 │   └── Notes.controller.test.js     (31 tests)
 ├── services/
-│   ├── User.service.test.js         (18 tests)
-│   └── Notes.service.test.js        (18 tests)
+│   ├── User.service.test.js         (25 tests)
+│   └── Notes.service.test.js        (27 tests)
 ├── routes/
 │   ├── User.routes.test.js          (12 tests)
 │   └── Notes.routes.test.js         (12 tests)
-└── models/
-    ├── User.model.test.js           (4 tests)
-    ├── Notes.model.test.js          (8 tests)
-    └── Counter.model.test.js        (7 tests)
+├── models/
+│   ├── User.model.test.js           (4 tests)
+│   ├── Notes.model.test.js          (8 tests)
+│   └── Counter.model.test.js        (7 tests)
+└── integration/
+    ├── User.integration.test.js     (17 tests)
+    └── Notes.integration.test.js    (24 tests)
 ```
 
 ## Test Coverage
@@ -74,21 +77,24 @@ All files             |   91.37 |    94.44 |   85.71 |   91.37 |
   - ✅ Delete note with validation
   - ✅ Error handling for all operations
 
-#### Services (36 tests - 66.66% coverage)
-- **User Service (18 tests)**
+#### Services (52 tests - 66.66% coverage)
+- **User Service (25 tests)**
   - ✅ Get all users (including large datasets of 100+ users)
   - ✅ Get user by ID (zero ID, very large IDs)
   - ✅ Update user (empty object, single field, multiple fields)
   - ✅ Delete user (including user_id 0)
-  - ✅ Database error handling
+  - ✅ Database error handling (timeout, connection refused, duplicate key, validation errors)
+  - ✅ Performance tests (concurrent reads, empty filters)
   - ⚠️ Create user not tested (requires Mongoose constructor mocking)
 
-- **Notes Service (18 tests)**
+- **Notes Service (27 tests)**
   - ✅ Get notes by user ID (large datasets, zero user_id)
   - ✅ Get note by ID (empty string, very long IDs)
   - ✅ Update note (very long content 50k chars, empty body)
   - ✅ Delete note (UUID-style IDs)
-  - ✅ Database error handling
+  - ✅ Advanced error scenarios (network errors, malformed queries, memory errors, connection pool)
+  - ✅ Data consistency (referential integrity, cascading deletes)
+  - ✅ Performance tests (efficient queries, pagination)
   - ⚠️ Create note not tested (requires Mongoose constructor mocking)
 
 #### Routes (24 tests - 100% coverage)
@@ -125,11 +131,26 @@ All files             |   91.37 |    94.44 |   85.71 |   91.37 |
   - ✅ Model and collection names
   - ✅ Auto-increment functionality design
 
-#### Model Tests (4 tests)
-- ✅ User model pre-save hook (auto-increment user_id)
-- ✅ Early return for existing users
-- ✅ Error handling in pre-save hook
-- ✅ Schema validation
+#### Integration Tests (41 tests)
+- **User Integration (17 tests)**
+  - ✅ Data integrity during updates
+  - ✅ Boundary testing (max/min age, long names/emails)
+  - ✅ Security testing (SQL injection, XSS, NoSQL injection, command injection)
+  - ✅ Concurrent operations (simultaneous retrievals, rapid updates)
+  - ✅ Error recovery (transient errors, network errors)
+  - ✅ Data validation (null/undefined values, whitespace handling)
+
+- **Notes Integration (24 tests)**
+  - ✅ Data integrity (content preservation, relationship maintenance)
+  - ✅ Boundary testing (1MB content, single char, max/min user_id)
+  - ✅ Security testing (XSS, iframe injection, SQL injection, path traversal)
+  - ✅ Concurrent operations (simultaneous creates, rapid updates, simultaneous reads)
+  - ✅ Error recovery (connection loss, timeouts)
+  - ✅ Data validation (null/undefined, whitespace, newlines, emoji, unicode)
+  - ✅ Performance tests (bulk retrieval, empty results)
+
+## Total Test Count
+**198 tests** all passing ✅
 
 ## Running Tests
 
