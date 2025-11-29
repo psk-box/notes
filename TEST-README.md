@@ -8,16 +8,18 @@ This project includes comprehensive unit tests for the Notes API using Jest test
 ```
 src/__tests__/
 ├── controllers/
-│   ├── User.controller.test.js      (20 tests)
-│   └── Notes.controller.test.js     (20 tests)
+│   ├── User.controller.test.js      (31 tests)
+│   └── Notes.controller.test.js     (31 tests)
 ├── services/
-│   ├── User.service.test.js         (12 tests)
-│   └── Notes.service.test.js        (12 tests)
+│   ├── User.service.test.js         (18 tests)
+│   └── Notes.service.test.js        (18 tests)
 ├── routes/
-│   ├── User.routes.test.js          (8 tests)
-│   └── Notes.routes.test.js         (8 tests)
+│   ├── User.routes.test.js          (12 tests)
+│   └── Notes.routes.test.js         (12 tests)
 └── models/
-    └── User.model.test.js           (4 tests)
+    ├── User.model.test.js           (4 tests)
+    ├── Notes.model.test.js          (8 tests)
+    └── Counter.model.test.js        (7 tests)
 ```
 
 ## Test Coverage
@@ -52,51 +54,76 @@ All files             |   91.37 |    94.44 |   85.71 |   91.37 |
 
 ### What's Tested
 
-#### User Controller Tests (20 tests)
-- ✅ Create user with valid data
-- ✅ Validation for missing fields (user_name, age, email, password)
-- ✅ Get all users
-- ✅ Get user by ID with validation
-- ✅ Update user
-- ✅ Delete user
-- ✅ Error handling for all operations
+#### Controllers (62 tests - 100% coverage)
+- **User Controller (31 tests)**
+  - ✅ Create user with all required fields
+  - ✅ Create user validation (missing/empty fields)
+  - ✅ Edge cases: empty strings, zero age, special characters
+  - ✅ Get all users (including empty results)
+  - ✅ Get user by ID with validation (non-numeric, negative, special chars)
+  - ✅ Update user (single/multiple fields, empty body)
+  - ✅ Delete user (including very large IDs)
+  - ✅ Error handling for all operations
 
-#### Notes Controller Tests (20 tests)
-- ✅ Create note with valid data
-- ✅ Validation for missing fields (user_id, content)
-- ✅ Get notes by user ID with validation
-- ✅ Get note by ID
-- ✅ Update note
-- ✅ Delete note
-- ✅ Error handling for all operations
+- **Notes Controller (31 tests)**
+  - ✅ Create note with validation
+  - ✅ Edge cases: empty content, very long content (10k chars), special characters, XSS patterns
+  - ✅ Get notes by user ID with validation (letters, negative)
+  - ✅ Get note by ID (including special character IDs)
+  - ✅ Update note (including empty body)
+  - ✅ Delete note with validation
+  - ✅ Error handling for all operations
 
-#### User Service Tests (12 tests)
-- ✅ Get all users
-- ✅ Get user by ID
-- ✅ Update user
-- ✅ Delete user
-- ✅ Database error handling
+#### Services (36 tests - 66.66% coverage)
+- **User Service (18 tests)**
+  - ✅ Get all users (including large datasets of 100+ users)
+  - ✅ Get user by ID (zero ID, very large IDs)
+  - ✅ Update user (empty object, single field, multiple fields)
+  - ✅ Delete user (including user_id 0)
+  - ✅ Database error handling
+  - ⚠️ Create user not tested (requires Mongoose constructor mocking)
 
-#### Notes Service Tests (12 tests)
-- ✅ Get notes by user ID
-- ✅ Get note by ID
-- ✅ Update note
-- ✅ Delete note
-- ✅ Database error handling
+- **Notes Service (18 tests)**
+  - ✅ Get notes by user ID (large datasets, zero user_id)
+  - ✅ Get note by ID (empty string, very long IDs)
+  - ✅ Update note (very long content 50k chars, empty body)
+  - ✅ Delete note (UUID-style IDs)
+  - ✅ Database error handling
+  - ⚠️ Create note not tested (requires Mongoose constructor mocking)
 
-#### Route Tests (16 tests)
-- ✅ User routes configuration (8 tests)
-  - GET / (list users)
-  - POST / (create user)
-  - GET /:user_id (get user by ID)
-  - PUT /:user_id (update user)
-  - DELETE /:user_id (delete user)
-- ✅ Notes routes configuration (8 tests)
-  - POST / (create note)
-  - GET /user/:user_id (get notes by user)
-  - GET /:note_id (get note by ID)
-  - PUT /:note_id (update note)
-  - DELETE /:note_id (delete note)
+#### Routes (24 tests - 100% coverage)
+- **User Routes (12 tests)**
+  - ✅ Router configuration and structure
+  - ✅ All 5 HTTP methods (GET, POST, PUT, DELETE)
+  - ✅ Parameterized routes verification
+  - ✅ Root path vs parameterized path distinction
+  - ✅ Route count validation
+
+- **Notes Routes (12 tests)**
+  - ✅ Router configuration and structure
+  - ✅ All 5 HTTP methods
+  - ✅ User ID and Note ID parameters
+  - ✅ Route path verification
+
+#### Models (19 tests - 53.84% coverage)
+- **User Model (4 tests)**
+  - ✅ Pre-save hook auto-increment logic
+  - ✅ Early return for existing users
+  - ✅ Error handling in pre-save hook
+  - ✅ Schema field validation
+
+- **Notes Model (8 tests)**
+  - ✅ Schema structure validation
+  - ✅ Field types (ObjectId, Number, String, Date)
+  - ✅ Required fields
+  - ✅ Default timestamp
+  - ✅ Model and collection names
+
+- **Counter Model (7 tests)**
+  - ✅ Schema structure
+  - ✅ Field types and defaults
+  - ✅ Model and collection names
+  - ✅ Auto-increment functionality design
 
 #### Model Tests (4 tests)
 - ✅ User model pre-save hook (auto-increment user_id)
@@ -226,21 +253,13 @@ These tests are ready for CI/CD integration:
 - [ ] Add mutation testing to verify test quality
 
 ## Total Test Count
-**84 tests** all passing ✅
+**141 tests** all passing ✅
 
 ## Uncovered Code
 
 The following code paths are not covered by unit tests (require integration tests):
 - **Service create methods** (lines 6-7 in both services) - require actual Mongoose model instantiation
 - **User model pre-save hook** (lines 15-27 in User.model.js) - requires Mongoose lifecycle hooks
-
-These would be best covered by integration tests with a test database.
-
-## Uncovered Code
-
-The following code paths are not covered by unit tests (require integration tests):
-- Service create methods (lines 6-7 in both services) - require database connection
-- User model pre-save hook (lines 15-27) - requires Mongoose hooks to execute
 
 These would be best covered by integration tests with a test database.
 

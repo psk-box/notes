@@ -51,4 +51,33 @@ describe('Notes Routes', () => {
     );
     expect(deleteRoute).toBeDefined();
   });
+
+  it('should have exactly 5 routes defined', () => {
+    const routes = notesRoutes.stack.filter(layer => layer.route);
+    expect(routes.length).toBe(5);
+  });
+
+  it('should have routes with correct HTTP methods', () => {
+    const routes = notesRoutes.stack.filter(layer => layer.route);
+    const methods = routes.map(layer => Object.keys(layer.route.methods)[0]);
+    
+    expect(methods).toContain('get');
+    expect(methods).toContain('post');
+    expect(methods).toContain('put');
+    expect(methods).toContain('delete');
+  });
+
+  it('should have user_id parameter in GET notes by user route', () => {
+    const userNotesRoute = notesRoutes.stack.find(
+      layer => layer.route?.path === '/user/:user_id'
+    );
+    expect(userNotesRoute.route.path).toContain(':user_id');
+  });
+
+  it('should have note_id parameter in individual note operations', () => {
+    const noteIdRoutes = notesRoutes.stack.filter(
+      layer => layer.route?.path === '/:note_id'
+    );
+    expect(noteIdRoutes.length).toBe(3); // GET, PUT, DELETE
+  });
 });

@@ -45,6 +45,21 @@ describe('UserService', () => {
 
       await expect(UserService.getUsers()).rejects.toThrow('Database error');
     });
+
+    it('should return large dataset of users', async () => {
+      const mockUsers = Array.from({ length: 100 }, (_, i) => ({
+        user_id: i + 1,
+        user_name: `User ${i + 1}`,
+        age: 20 + (i % 50),
+        email: `user${i + 1}@example.com`
+      }));
+
+      User.find.mockResolvedValue(mockUsers);
+
+      const result = await UserService.getUsers();
+
+      expect(result).toHaveLength(100);
+    });
   });
 
   describe('getUserById', () => {
@@ -77,6 +92,30 @@ describe('UserService', () => {
       User.findOne.mockRejectedValue(new Error('Database error'));
 
       await expect(UserService.getUserById(1)).rejects.toThrow('Database error');
+    });
+
+    it('should handle user_id of 0', async () => {
+      User.findOne.mockResolvedValue(null);
+
+      const result = await UserService.getUserById(0);
+
+      expect(User.findOne).toHaveBeenCalledWith({ user_id: 0 });
+      expect(result).toBeNull();
+    });
+
+    it('should handle very large user_id', async () => {
+      const mockUser = {
+        user_id: 999999999,
+        user_name: 'Test User',
+        age: 25,
+        email: 'test@example.com'
+      };
+
+      User.findOne.mockResolvedValue(mockUser);
+
+      const result = await UserService.getUserById(999999999);
+
+      expect(result).toEqual(mockUser);
     });
   });
 
@@ -122,6 +161,42 @@ describe('UserService', () => {
 
       await expect(UserService.updateUser(1, updateData)).rejects.toThrow('Update failed');
     });
+
+    it('should update user with empty update object', async () => {
+      const updatedUser = {
+        user_id: 1,
+        user_name: 'John Doe',
+        age: 25,
+        email: 'john@example.com'
+      };
+
+      User.findOneAndUpdate.mockResolvedValue(updatedUser);
+
+      const result = await UserService.updateUser(1, {});
+
+      expect(User.findOneAndUpdate).toHaveBeenCalledWith(
+        { user_id: 1 },
+        {},
+        { new: true }
+      );
+      expect(result).toEqual(updatedUser);
+    });
+
+    it('should update user with only age', async () => {
+      const updateData = { age: 30 };
+      const updatedUser = {
+        user_id: 1,
+        user_name: 'John Doe',
+        age: 30,
+        email: 'john@example.com'
+      };
+
+      User.findOneAndUpdate.mockResolvedValue(updatedUser);
+
+      const result = await UserService.updateUser(1, updateData);
+
+      expect(result.age).toBe(30);
+    });
   });
 
   describe('deleteUser', () => {
@@ -154,6 +229,15 @@ describe('UserService', () => {
       User.findOneAndDelete.mockRejectedValue(new Error('Delete failed'));
 
       await expect(UserService.deleteUser(1)).rejects.toThrow('Delete failed');
+    });
+
+    it('should handle deletion with user_id 0', async () => {
+      User.findOneAndDelete.mockResolvedValue(null);
+
+      const result = await UserService.deleteUser(0);
+
+      expect(User.findOneAndDelete).toHaveBeenCalledWith({ user_id: 0 });
+      expect(result).toBeNull();
     });
   });
 });

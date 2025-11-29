@@ -129,6 +129,75 @@ describe('UserController', () => {
         error: 'Database error'
       });
     });
+
+    it('should return 400 when user_name is empty string', async () => {
+      req.body = {
+        user_name: '',
+        age: 25,
+        email: 'john@example.com',
+        password: 'password123'
+      };
+
+      await UserController.createUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should return 400 when email is empty string', async () => {
+      req.body = {
+        user_name: 'John Doe',
+        age: 25,
+        email: '',
+        password: 'password123'
+      };
+
+      await UserController.createUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should return 400 when password is empty string', async () => {
+      req.body = {
+        user_name: 'John Doe',
+        age: 25,
+        email: 'john@example.com',
+        password: ''
+      };
+
+      await UserController.createUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should return 400 when age is 0', async () => {
+      req.body = {
+        user_name: 'John Doe',
+        age: 0,
+        email: 'john@example.com',
+        password: 'password123'
+      };
+
+      await UserController.createUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should create user with special characters in name', async () => {
+      const userData = {
+        user_name: "O'Connor-Smith",
+        age: 25,
+        email: 'oconnor@example.com',
+        password: 'password123'
+      };
+      const createdUser = { user_id: 1, ...userData };
+
+      req.body = userData;
+      UserService.createUser.mockResolvedValue(createdUser);
+
+      await UserController.createUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
   });
 
   describe('getUsers', () => {
@@ -238,6 +307,33 @@ describe('UserController', () => {
         error: 'Database error'
       });
     });
+
+    it('should return 400 when user_id is an empty string', async () => {
+      req.params.user_id = '';
+
+      await UserController.getUserById(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'User ID is required'
+      });
+    });
+
+    it('should return 400 when user_id is negative', async () => {
+      req.params.user_id = '-1';
+
+      await UserController.getUserById(req, res);
+
+      expect(UserService.getUserById).toHaveBeenCalledWith('-1');
+    });
+
+    it('should return 400 when user_id contains special characters', async () => {
+      req.params.user_id = '1@#$';
+
+      await UserController.getUserById(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
   });
 
   describe('updateUser', () => {
@@ -291,6 +387,36 @@ describe('UserController', () => {
         error: 'Database error'
       });
     });
+
+    it('should update user with empty body object', async () => {
+      req.params.user_id = '1';
+      req.body = {};
+      const updatedUser = {
+        user_id: 1,
+        user_name: 'John Doe',
+        age: 25,
+        email: 'john@example.com'
+      };
+
+      UserService.updateUser.mockResolvedValue(updatedUser);
+
+      await UserController.updateUser(req, res);
+
+      expect(UserService.updateUser).toHaveBeenCalledWith('1', {});
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should update user with multiple fields', async () => {
+      req.params.user_id = '1';
+      req.body = { user_name: 'John Updated', age: 30, email: 'john.new@example.com' };
+      const updatedUser = { user_id: 1, ...req.body };
+
+      UserService.updateUser.mockResolvedValue(updatedUser);
+
+      await UserController.updateUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
   });
 
   describe('deleteUser', () => {
@@ -338,6 +464,15 @@ describe('UserController', () => {
         message: 'Error deleting user',
         error: 'Database error'
       });
+    });
+
+    it('should handle very large user_id', async () => {
+      req.params.user_id = '999999999';
+      UserService.deleteUser.mockResolvedValue(null);
+
+      await UserController.deleteUser(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
     });
   });
 });

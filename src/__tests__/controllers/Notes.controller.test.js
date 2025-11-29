@@ -92,6 +92,59 @@ describe('NotesController', () => {
         error: 'Database error'
       });
     });
+
+    it('should return 400 when content is empty string', async () => {
+      req.body = {
+        user_id: 1,
+        content: ''
+      };
+
+      await NotesController.createNote(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should create note with special characters in content', async () => {
+      const noteData = {
+        user_id: 1,
+        content: 'Test <script>alert("XSS")</script> & special chars!'
+      };
+      const createdNote = { id: '123', ...noteData, createdAt: new Date() };
+
+      req.body = noteData;
+      NotesService.createNote.mockResolvedValue(createdNote);
+
+      await NotesController.createNote(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+
+    it('should create note with very long content', async () => {
+      const longContent = 'A'.repeat(10000);
+      const noteData = {
+        user_id: 1,
+        content: longContent
+      };
+      const createdNote = { id: '123', ...noteData, createdAt: new Date() };
+
+      req.body = noteData;
+      NotesService.createNote.mockResolvedValue(createdNote);
+
+      await NotesController.createNote(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+
+    it('should return 400 when user_id is 0', async () => {
+      req.body = {
+        user_id: 0,
+        content: 'Test note'
+      };
+
+      await NotesController.createNote(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
   });
 
   describe('getNotesByUserId', () => {
@@ -158,6 +211,32 @@ describe('NotesController', () => {
         error: 'Database error'
       });
     });
+
+    it('should return 400 when user_id is empty string', async () => {
+      req.params.user_id = '';
+
+      await NotesController.getNotesByUserId(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should handle negative user_id', async () => {
+      req.params.user_id = '-5';
+      NotesService.getNotesByUserId.mockResolvedValue([]);
+
+      await NotesController.getNotesByUserId(req, res);
+
+      expect(NotesService.getNotesByUserId).toHaveBeenCalledWith('-5');
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should return 400 when user_id contains letters', async () => {
+      req.params.user_id = 'abc123';
+
+      await NotesController.getNotesByUserId(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
   });
 
   describe('getNoteById', () => {
@@ -216,6 +295,30 @@ describe('NotesController', () => {
         error: 'Database error'
       });
     });
+
+    it('should return 400 when note_id is empty string', async () => {
+      req.params.note_id = '';
+
+      await NotesController.getNoteById(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should handle note_id with special characters', async () => {
+      req.params.note_id = 'abc-123-def';
+      const mockNote = {
+        id: 'abc-123-def',
+        user_id: 1,
+        content: 'Test note',
+        createdAt: new Date()
+      };
+
+      NotesService.getNoteById.mockResolvedValue(mockNote);
+
+      await NotesController.getNoteById(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
   });
 
   describe('updateNote', () => {
@@ -268,6 +371,24 @@ describe('NotesController', () => {
         message: 'Error updating note',
         error: 'Database error'
       });
+    });
+
+    it('should update note with empty body object', async () => {
+      req.params.note_id = '123';
+      req.body = {};
+      const updatedNote = {
+        id: '123',
+        user_id: 1,
+        content: 'Original content',
+        createdAt: new Date()
+      };
+
+      NotesService.updateNote.mockResolvedValue(updatedNote);
+
+      await NotesController.updateNote(req, res);
+
+      expect(NotesService.updateNote).toHaveBeenCalledWith('123', {});
+      expect(res.status).toHaveBeenCalledWith(200);
     });
   });
 
@@ -328,6 +449,14 @@ describe('NotesController', () => {
         message: 'Error deleting note',
         error: 'Database error'
       });
+    });
+
+    it('should return 400 when note_id is empty string', async () => {
+      req.params.note_id = '';
+
+      await NotesController.deleteNote(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
     });
   });
 });

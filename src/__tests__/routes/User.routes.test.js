@@ -51,4 +51,33 @@ describe('User Routes', () => {
     );
     expect(deleteRoute).toBeDefined();
   });
+
+  it('should have exactly 5 routes defined', () => {
+    const routes = userRoutes.stack.filter(layer => layer.route);
+    expect(routes.length).toBe(5);
+  });
+
+  it('should have routes with correct HTTP methods', () => {
+    const routes = userRoutes.stack.filter(layer => layer.route);
+    const methods = routes.map(layer => Object.keys(layer.route.methods)[0]);
+    
+    expect(methods).toContain('get');
+    expect(methods).toContain('post');
+    expect(methods).toContain('put');
+    expect(methods).toContain('delete');
+  });
+
+  it('should have parameterized routes for individual user operations', () => {
+    const paramRoutes = userRoutes.stack.filter(
+      layer => layer.route?.path === '/:user_id'
+    );
+    expect(paramRoutes.length).toBe(3); // GET, PUT, DELETE
+  });
+
+  it('should have root path routes for collection operations', () => {
+    const rootRoutes = userRoutes.stack.filter(
+      layer => layer.route?.path === '/'
+    );
+    expect(rootRoutes.length).toBe(2); // GET, POST
+  });
 });

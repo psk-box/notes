@@ -45,6 +45,30 @@ describe('NotesService', () => {
 
       await expect(NotesService.getNotesByUserId(1)).rejects.toThrow('Database error');
     });
+
+    it('should return large number of notes for a user', async () => {
+      const mockNotes = Array.from({ length: 50 }, (_, i) => ({
+        id: `note-${i + 1}`,
+        user_id: 1,
+        content: `Note content ${i + 1}`,
+        createdAt: new Date()
+      }));
+
+      Notes.find.mockResolvedValue(mockNotes);
+
+      const result = await NotesService.getNotesByUserId(1);
+
+      expect(result).toHaveLength(50);
+    });
+
+    it('should handle user_id of 0', async () => {
+      Notes.find.mockResolvedValue([]);
+
+      const result = await NotesService.getNotesByUserId(0);
+
+      expect(Notes.find).toHaveBeenCalledWith({ user_id: 0 });
+      expect(result).toEqual([]);
+    });
   });
 
   describe('getNoteById', () => {
@@ -77,6 +101,31 @@ describe('NotesService', () => {
       Notes.findOne.mockRejectedValue(new Error('Database error'));
 
       await expect(NotesService.getNoteById('123')).rejects.toThrow('Database error');
+    });
+
+    it('should handle empty string note_id', async () => {
+      Notes.findOne.mockResolvedValue(null);
+
+      const result = await NotesService.getNoteById('');
+
+      expect(Notes.findOne).toHaveBeenCalledWith({ id: '' });
+      expect(result).toBeNull();
+    });
+
+    it('should handle very long note_id', async () => {
+      const longId = 'a'.repeat(1000);
+      const mockNote = {
+        id: longId,
+        user_id: 1,
+        content: 'Test note',
+        createdAt: new Date()
+      };
+
+      Notes.findOne.mockResolvedValue(mockNote);
+
+      const result = await NotesService.getNoteById(longId);
+
+      expect(result).toEqual(mockNote);
     });
   });
 
@@ -122,6 +171,42 @@ describe('NotesService', () => {
 
       await expect(NotesService.updateNote('123', updateData)).rejects.toThrow('Update failed');
     });
+
+    it('should update note with very long content', async () => {
+      const longContent = 'X'.repeat(50000);
+      const updateData = { content: longContent };
+      const updatedNote = {
+        id: '123',
+        user_id: 1,
+        content: longContent,
+        createdAt: new Date()
+      };
+
+      Notes.findOneAndUpdate.mockResolvedValue(updatedNote);
+
+      const result = await NotesService.updateNote('123', updateData);
+
+      expect(result.content).toHaveLength(50000);
+    });
+
+    it('should update note with empty body', async () => {
+      const updatedNote = {
+        id: '123',
+        user_id: 1,
+        content: 'Original content',
+        createdAt: new Date()
+      };
+
+      Notes.findOneAndUpdate.mockResolvedValue(updatedNote);
+
+      const result = await NotesService.updateNote('123', {});
+
+      expect(Notes.findOneAndUpdate).toHaveBeenCalledWith(
+        { id: '123' },
+        {},
+        { new: true }
+      );
+    });
   });
 
   describe('deleteNote', () => {
@@ -154,6 +239,22 @@ describe('NotesService', () => {
       Notes.findOneAndDelete.mockRejectedValue(new Error('Delete failed'));
 
       await expect(NotesService.deleteNote('123')).rejects.toThrow('Delete failed');
+    });
+
+    it('should handle UUID-style note_id', async () => {
+      const uuid = '550e8400-e29b-41d4-a716-446655440000';
+      const deletedNote = {
+        id: uuid,
+        user_id: 1,
+        content: 'Test note',
+        createdAt: new Date()
+      };
+
+      Notes.findOneAndDelete.mockResolvedValue(deletedNote);
+
+      const result = await NotesService.deleteNote(uuid);
+
+      expect(result).toEqual(deletedNote);
     });
   });
 });
