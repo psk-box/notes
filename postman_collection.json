@@ -1,0 +1,112 @@
+{
+  "info": {
+    "name": "Notes API - Full endpoints",
+    "_postman_id": "notes-api-full-1",
+    "description": "Postman collection for users and notes endpoints (use {{baseUrl}} variable).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Create User",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_name\": \"Jane Doe\",\n  \"age\": 30,\n  \"email\": \"jane@example.com\",\n  \"password\": \"securePassword123\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] }
+      }
+    },
+    {
+      "name": "Get All Users",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] }
+      }
+    },
+    {
+      "name": "Get User By ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/users/:user_id", "host": ["{{baseUrl}}"], "path": ["users", ":user_id"] }
+      }
+    },
+    {
+      "name": "Update User",
+      "request": {
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_name\": \"Jane A. Doe\",\n  \"age\": 31\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/users/:user_id", "host": ["{{baseUrl}}"], "path": ["users", ":user_id"] }
+      }
+    },
+    {
+      "name": "Delete User",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/users/:user_id", "host": ["{{baseUrl}}"], "path": ["users", ":user_id"] }
+      }
+    },
+    {
+      "name": "Create Note",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": 1,\n  \"content\": \"Eggs, milk, bread\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/notes", "host": ["{{baseUrl}}"], "path": ["notes"] }
+      }
+    },
+    {
+      "name": "Get Notes By User ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/notes/user/:user_id", "host": ["{{baseUrl}}"], "path": ["notes", "user", ":user_id"] }
+      }
+    },
+    {
+      "name": "Get Note By ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/notes/:note_id", "host": ["{{baseUrl}}"], "path": ["notes", ":note_id"] }
+      }
+    },
+    {
+      "name": "Update Note",
+      "request": {
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"content\": \"Eggs, milk, bread, and butter\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/notes/:note_id", "host": ["{{baseUrl}}"], "path": ["notes", ":note_id"] }
+      }
+    },
+    {
+      "name": "Delete Note",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/notes/:note_id", "host": ["{{baseUrl}}"], "path": ["notes", ":note_id"] }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" }
+  ]
+}
