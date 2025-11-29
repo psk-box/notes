@@ -1,10 +1,76 @@
-# POST API Documentation
+# API Documentation
 
-This document covers POST endpoints implemented in the project routes:
-- `src/routes/User.routes.js` — POST `/` (create user)
-- `src/routes/Notes.routes.js` — POST `/` (create note)
+This document covers all API endpoints implemented in the project routes:
+- `src/routes/User.routes.js` — User endpoints (GET, POST, PUT, DELETE)
+- `src/routes/Notes.routes.js` — Notes endpoints (GET, POST, PUT, DELETE)
 
 Adjust the base path used by your Express app (for example, `/users` or `/notes`) as configured in `server.js`.
+
+---
+
+## User Endpoints
+
+### Get All Users
+
+- **Method:** GET
+- **Path:** `/users`
+- **Description:** Retrieve all users from the database.
+
+#### Successful Response
+- **Status:** `200 OK`
+
+```json
+[
+  {
+    "_id": "6929f28db4bdbd959d7a59b7",
+    "user_id": 1,
+    "user_name": "testuser",
+    "age": 25,
+    "email": "testuser@example.com",
+    "password": "password123",
+    "createdAt": "2025-11-28T19:05:49.888Z"
+  }
+]
+```
+
+#### Curl example
+
+```bash
+curl -X GET http://localhost:3000/users
+```
+
+---
+
+### Get User By ID
+
+- **Method:** GET
+- **Path:** `/users/:user_id`
+- **Description:** Retrieve a specific user by their user_id.
+
+#### Successful Response
+- **Status:** `200 OK`
+
+```json
+{
+  "_id": "6929f28db4bdbd959d7a59b7",
+  "user_id": 1,
+  "user_name": "testuser",
+  "age": 25,
+  "email": "testuser@example.com",
+  "password": "password123",
+  "createdAt": "2025-11-28T19:05:49.888Z"
+}
+```
+
+#### Common Error Responses
+- `404 Not Found` — user_id does not exist
+- `500 Internal Server Error` — unexpected server error
+
+#### Curl example
+
+```bash
+curl -X GET http://localhost:3000/users/1
+```
 
 ---
 
@@ -61,6 +127,148 @@ If your API requires authentication for creating users (e.g., admin-only), add a
 
 ---
 
+### Update User
+
+- **Method:** PUT
+- **Path:** `/users/:user_id`
+- **Headers:** `Content-Type: application/json`
+- **Description:** Update an existing user's information.
+
+#### Request Body (example)
+
+```json
+{
+  "user_name": "Jane A. Doe",
+  "age": 31,
+  "email": "jane.updated@example.com"
+}
+```
+
+> Note: You can update any combination of `user_name`, `age`, `email`, or `password`.
+
+#### Successful Response
+- **Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "user_id": 1,
+    "user_name": "Jane A. Doe",
+    "age": 31,
+    "email": "jane.updated@example.com",
+    "createdAt": "2025-11-29T12:34:56.789Z"
+  }
+}
+```
+
+#### Common Error Responses
+- `400 Bad Request` — missing/invalid fields
+- `404 Not Found` — user_id does not exist
+- `500 Internal Server Error` — unexpected server error
+
+#### Curl example
+
+```bash
+curl -X PUT http://localhost:3000/users/1 \
+  -H "Content-Type: application/json" \
+  -d '{"user_name":"Jane A. Doe","age":31}'
+```
+
+---
+
+### Delete User
+
+- **Method:** DELETE
+- **Path:** `/users/:user_id`
+- **Description:** Delete a user from the database.
+
+#### Successful Response
+- **Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "User deleted successfully"
+}
+```
+
+#### Common Error Responses
+- `404 Not Found` — user_id does not exist
+- `500 Internal Server Error` — unexpected server error
+
+#### Curl example
+
+```bash
+curl -X DELETE http://localhost:3000/users/1
+```
+
+---
+
+## Notes Endpoints
+
+### Get Notes By User ID
+
+- **Method:** GET
+- **Path:** `/notes/user/:user_id`
+- **Description:** Retrieve all notes associated with a specific user.
+
+#### Successful Response
+- **Status:** `200 OK`
+
+```json
+[
+  {
+    "_id": "692a0e573152dbadbc73740e",
+    "user_id": 1,
+    "content": "Test note from curl - Eggs, milk, bread",
+    "createdAt": "2025-11-28T21:04:23.064Z"
+  }
+]
+```
+
+#### Common Error Responses
+- `404 Not Found` — user_id does not exist or no notes found
+- `500 Internal Server Error` — unexpected server error
+
+#### Curl example
+
+```bash
+curl -X GET http://localhost:3000/notes/user/1
+```
+
+---
+
+### Get Note By ID
+
+- **Method:** GET
+- **Path:** `/notes/:note_id`
+- **Description:** Retrieve a specific note by its MongoDB ObjectId.
+
+#### Successful Response
+- **Status:** `200 OK`
+
+```json
+{
+  "_id": "692a0e573152dbadbc73740e",
+  "user_id": 1,
+  "content": "Test note from curl - Eggs, milk, bread",
+  "createdAt": "2025-11-28T21:04:23.064Z"
+}
+```
+
+#### Common Error Responses
+- `404 Not Found` — note_id does not exist
+- `500 Internal Server Error` — unexpected server error
+
+#### Curl example
+
+```bash
+curl -X GET http://localhost:3000/notes/692a0e573152dbadbc73740e
+```
+
+---
+
 ## Create Note
 
 - **Method:** POST
@@ -108,6 +316,101 @@ curl -X POST http://localhost:3000/notes \
 ```
 
 If your notes endpoint requires authentication, include `-H "Authorization: Bearer <token>"` in the curl command.
+
+---
+
+### Update Note
+
+- **Method:** PUT
+- **Path:** `/notes/:note_id`
+- **Headers:** `Content-Type: application/json`
+- **Description:** Update an existing note's content.
+
+#### Request Body (example)
+
+```json
+{
+  "content": "Eggs, milk, bread, and butter"
+}
+```
+
+#### Successful Response
+- **Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "692a0e573152dbadbc73740e",
+    "user_id": 1,
+    "content": "Eggs, milk, bread, and butter",
+    "createdAt": "2025-11-28T21:04:23.064Z"
+  }
+}
+```
+
+#### Common Error Responses
+- `400 Bad Request` — missing/invalid content
+- `404 Not Found` — note_id does not exist
+- `500 Internal Server Error` — unexpected server error
+
+#### Curl example
+
+```bash
+curl -X PUT http://localhost:3000/notes/692a0e573152dbadbc73740e \
+  -H "Content-Type: application/json" \
+  -d '{"content":"Eggs, milk, bread, and butter"}'
+```
+
+---
+
+### Delete Note
+
+- **Method:** DELETE
+- **Path:** `/notes/:note_id`
+- **Description:** Delete a note from the database.
+
+#### Successful Response
+- **Status:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Note deleted successfully"
+}
+```
+
+#### Common Error Responses
+- `404 Not Found` — note_id does not exist
+- `500 Internal Server Error` — unexpected server error
+
+#### Curl example
+
+```bash
+curl -X DELETE http://localhost:3000/notes/692a0e573152dbadbc73740e
+```
+
+---
+
+## Summary
+
+### User Endpoints
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/users` | Get all users |
+| POST | `/users` | Create a new user |
+| GET | `/users/:user_id` | Get user by ID |
+| PUT | `/users/:user_id` | Update user |
+| DELETE | `/users/:user_id` | Delete user |
+
+### Notes Endpoints
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/notes` | Create a new note |
+| GET | `/notes/user/:user_id` | Get all notes for a user |
+| GET | `/notes/:note_id` | Get note by ID |
+| PUT | `/notes/:note_id` | Update note |
+| DELETE | `/notes/:note_id` | Delete note |
 
 ---
 
